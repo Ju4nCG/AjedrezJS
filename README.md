@@ -1,8 +1,6 @@
 # AjedrezJS
 Ajedrez hecho en JavaScript, mediante la implementación de matrices/arrays y demás.
-Este es un proyecto para la asignatura de programación, realizado por Juan Casanova Gago.
 ----------------
-Para generar el tablero iba recorriendo la matriz y generando una celda por cada ficha o celda vacía
-pero respecto al diseño de la misma he utilizado parte del css de un repositorio de internet. 
-Así que me gustaría dar créditos al creador del estilo (CSS) de la tabla: <br>
-https://codepen.io/JulioLopez/pens/
+El código es bastante mejorable ya que lo hice hace tiempo, me gustaría pulirlo y añadir ciertas dinámicas como el jaque (Forzar al jugador a mover ficha para evitar jaque mate), pero ando metido en otros proyectos [Trataré de dedicarle alguna tarde ;) para mejorarlo].<br>
+El ajedrez es completamente funcional, con las fichas solo se pueden realizar sus respectivos movimientos legales (incluyendo el enroque) y cuando se genera un movimiento ilegal/se gana una partida salta una alerta con información respecto al evento sucedido mediante la librería de SweetAlert2, aquí os dejo su URL por si queréis echarle un vistazo:
+https://sweetalert2.github.io/
