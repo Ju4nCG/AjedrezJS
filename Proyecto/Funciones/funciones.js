@@ -36,6 +36,7 @@ function asignarClick() {
                 let origen = seleccionado.origen.split("-");
                 x1 = origen[0];
                 y1 = origen[1];
+    
                 if (turno == "blanca" && matrizTablero[x1][y1].color == "negra" || turno == "negra" && matrizTablero[x1][y1].color == "blanca") {
                     swal(
                         'Error',
@@ -86,6 +87,74 @@ function cambiarTurno() {
         textoTurno.innerHTML = "<span id='peonB'>&#9823</span>";
     } else {
         textoTurno.innerHTML = "<span id='peonN'>&#9823</span>";
+    }
+}
+
+function comprobarJaque(x1, y1, x2, y2) {
+
+    // Se comprueban si el movimiento elegido causa pone en peligro al rey(jaque) o no libera del jaque infligido por el enemigo
+    let jaque = false
+    let estadoAnterior = matrizTablero[x2][y2];
+    matrizTablero[x2][y2] = matrizTablero[x1][y1];
+    matrizTablero[x1][y1] = piezas.vacio;
+
+    for (let xO = 0; xO < matrizTablero.length; xO++) { //posicion x-Origen 
+        for (let yO = 0; yO < matrizTablero[xO].length; yO++) { //posicion y-Origen
+            let nombre = matrizTablero[xO][yO].nombre;
+            if (nombre != 'vacio') {
+                for (let xD = 0; xD < matrizTablero.length; xD++) { //posicion x-Destino 
+                    for (let yD = 0; yD < matrizTablero[xD].length; yD++) { //posicion x-Destino 
+                        if (this[nombre](xO, yO, xD, yD) == true && matrizTablero[xD][yD].nombre == 'rey' && matrizTablero[xD][yD].color == turno) {
+                            jaque = true;
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+
+    // si hay jaque la casilla del rey se colorea de rojo
+    if (jaque) {
+        let id = ''
+        matrizTablero.forEach((a, x) => {
+            a.find((b, y) => {
+                if (b.nombre == 'rey' && b.color == turno) {
+                    id = {x: x, y: y}
+                    return 
+                }
+            })
+        })
+        document.getElementById(id.x + '-' + id.y).style.background = "#f009"
+    }
+    matrizTablero[x1][y1] = matrizTablero[x2][y2];
+    matrizTablero[x2][y2] = estadoAnterior;
+
+    return jaque
+
+}
+function comprobarMate(x1, y1, x2, y2) {
+    // Se comprueban todos los movimientos posibles para verificar si aun no es mate
+    let noMate = 0
+    for (let x1 = 0; x1 < matrizTablero.length; x1++) { 
+        for (let y1 = 0; y1 < matrizTablero[x1].length; y1++) {
+            let ficha = matrizTablero[x1][y1];
+            if (ficha.nombre != 'vacio') {
+                for (let x2 = 0; x2 < matrizTablero.length; x2++) { 
+                    for (let y2 = 0; y2 < matrizTablero[x2].length; y2++) {
+                        if (ficha.color == turno && this[ficha.nombre](x1, y1, x2, y2) == true && comprobarJaque(x1, y1, x2, y2) == false) {
+
+                            noMate++
+                        }
+                    }
+                }
+            }
+        }
+
+    }
+    if (noMate == 0) {
+        cambiarTurno()
+        victoria()
     }
 }
 
@@ -186,23 +255,34 @@ function torreMovida() {
 }
 
 function trasladarFicha(x1, y1, x2, y2) {
-    matrizTablero[x2][y2] = matrizTablero[x1][y1];
-    matrizTablero[x1][y1] = piezas.vacio;
+    // Se comprueba de que el rey no esta en jaque
+    if (comprobarJaque(x1, y1, x2, y2) == true) {
+        swal(
+            'JAQUE!',
+            'Ese movimiento pone al Rey en jaque o el Rey ya está en jaque... protegelo o muevelo!',
+            'warning'
+        ).then(this.initialize);
+    }else {
+    
+        matrizTablero[x2][y2] = matrizTablero[x1][y1];
+        matrizTablero[x1][y1] = piezas.vacio;
+
+        cambiarTurno()
+    }
+    comprobarMate()
+
 }
 
-function victoria(x2, y2) {
-    //Usada para comprobar si el destino es el rey
-    if (matrizTablero[x2][y2].nombre == "rey") {
-        swal(
-            'Enhorabuena',
-            'Has ganado, jugador de piezas ' + turno + "s",
-            'success'
-        ).then(this.initialize);
-        //Recargar automáticamente la página
-        setTimeout(function () {
-            window.location.reload();
-        }, 3000)
-    }
+function victoria() {
+    swal(
+        'Enhorabuena',
+        'Has ganado, jugador de piezas ' + turno + "s",
+        'success'
+    ).then(this.initialize);
+    //Recargar automáticamente la página
+    setTimeout(function () {
+        window.location.reload();
+    }, 3000)
 }
 
 function moverFicha(seleccion) {
@@ -215,14 +295,13 @@ function moverFicha(seleccion) {
     let y1 = origen[1];
     let x2 = destino[0];
     let y2 = destino[1];
+
     //Aquí es donde pongo en uso ambos arrays
 
     switch (matrizTablero[x1][y1].nombre) {
         case "peon":
             if (peon(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
-                cambiarTurno();
             } else {
                 swal(
                     'Error',
@@ -233,11 +312,8 @@ function moverFicha(seleccion) {
             break;
         case "torre":
             if (torre(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
                 torreMovida();
-                cambiarTurno();
-                console.log
             } else {
                 swal(
                     'Error',
@@ -248,9 +324,7 @@ function moverFicha(seleccion) {
             break;
         case "reina":
             if (reina(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
-                cambiarTurno();
             } else {
                 swal(
                     'Error',
@@ -261,11 +335,9 @@ function moverFicha(seleccion) {
             break;
         case "rey":
             if (rey(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 enroque(x1, y1, x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
                 reyMovido();
-                cambiarTurno();
             } else {
                 swal(
                     'Error',
@@ -276,9 +348,7 @@ function moverFicha(seleccion) {
             break;
         case "alfil":
             if (alfil(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
-                cambiarTurno();
             } else {
                 swal(
                     'Error',
@@ -289,9 +359,7 @@ function moverFicha(seleccion) {
             break;
         case "caballo":
             if (caballo(x1, y1, x2, y2) == true) {
-                victoria(x2, y2);
                 trasladarFicha(x1, y1, x2, y2);
-                cambiarTurno();
             } else {
                 swal(
                     'Error',
@@ -301,6 +369,8 @@ function moverFicha(seleccion) {
             }
             break;
     }
+
+    
 }
 
 function visualizar() {
@@ -310,37 +380,15 @@ function visualizar() {
         for (let y = 0; y < matrizTablero[x].length; y++) {
             idCelda = x + "-" + y;
             let celda = document.getElementById(idCelda);
-            switch (matrizTablero[x1][y1].nombre) {
-                case "peon":
-                    if ((peon(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
-                case "rey":
-                    if ((rey(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
-                case "reina":
-                    if ((reina(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
-                case "alfil":
-                    if ((alfil(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
-                case "caballo":
-                    if ((caballo(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
-                case "torre":
-                    if ((torre(x1, y1, x, y) == true)) {
-                        celda.innerHTML = "<span class='suma'>+</span>";
-                    }
-                    break;
+            let nombre = matrizTablero[x1][y1].nombre
+            if (nombre != 'vacio' && this[nombre](x1, y1, x, y) == true && comprobarJaque(x1, y1, x, y) == false) {
+                if (celda.innerHTML == '') {
+                    celda.style.background = "#0a08"
+                }else{
+                    celda.style.background = "#5a08"
+                }
+                celda.innerHTML = "<span class='suma'>+</span>";
+                celda.style.outline = "#0002 1px solid"
             }
         }
     }

@@ -22,6 +22,9 @@ const negras = {
     peon: { nombre: "peon", codigo: "&#9823;", color: "negra" },
 }
 
+//Objeto con todas las piezas
+const todas = {negras: negras, blancas: blancas}
+
 //Objeto piezas vacías
 const piezas = {
     vacio: { nombre: "vacio", codigo: "", color: "nada" }
@@ -45,3 +48,6 @@ var seleccionado = {
     origen: "",
     destino: ""
 }
+
+//Declaracion de variable jaque
+var jaque = false
